@@ -196,7 +196,7 @@ class Fold():
                 #print(df_treino)
 
                 #5. Crie o fold (objeto da classe Fold) para adicioná-lo no vetor
-                fold = Fold(df_treino, df_to_predict, col_classe)
+                fold = Fold(df_treino, df_to_predict, col_classe, num_folds_validacao, num_repeticoes_validacao)
                 arr_folds.append(fold)
 
 

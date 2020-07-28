@@ -49,9 +49,11 @@ class Experimento():
             ##1. Caso haja um metodo de otimizacao, obtenha o melhor metodo com ele
             #substitua os none quando necessario
             if(self.ClasseObjetivoOtimizacao is not None):
-                study = optuna.create_study()
+                study = optuna.create_study(sampler=self.sampler)
+
                 objetivo_otimizacao = self.ClasseObjetivoOtimizacao(fold)
-                study.optimize(objetivo_otimizacao, n_trials=30)
+
+                study.optimize(objetivo_otimizacao, n_trials=self.num_trials)
 
                 #1.(a) obtem o melhor metodo da otimização
                 #  . use o vetor arr_evaluated_methods e o número do best_trial (study.best_trial.number)
@@ -63,7 +65,7 @@ class Experimento():
 
             ##2. Efetua a predição nos valores de teste (fold.df_data_to_predict)
             #logo após, adiciona em resultados o resultado predito (objeto da classe Resultado) usando o melhor metodo
-            resultado = objetivo_otimizacao.resultado_metrica_otimizacao
+            resultado = best_method.eval(fold.df_treino, fold.df_data_to_predict, fold.col_classe) 
             self._resultados.append(resultado)
         return self._resultados
 
@@ -72,7 +74,13 @@ class Experimento():
         """
         Atividade 6: Calcula a média do f1 dos resultados.
         """
-        return None
+        macroF1_avg = 0 
+        for resultado in self.resultados:
+            macroF1_avg += resultado.macro_f1
+            
+        macroF1_avg/=len(self._resultados)
+            
+        return macroF1_avg
 
 
 
@@ -96,11 +104,10 @@ class OtimizacaoObjetivo:
         sum = 0
         metodo = self.obtem_metodo(trial)
         self.arr_evaluated_methods.append(metodo)
-        print(len(self.arr_evaluated_methods))
         for fold_validacao in self.fold.arr_folds_validacao:
             resultado = metodo.eval(fold_validacao.df_treino,fold_validacao.df_data_to_predict,self.fold.col_classe)
             sum += self.resultado_metrica_otimizacao(resultado)
-
+    
         return sum/len(self.fold.arr_folds_validacao)
 
 class OtimizacaoObjetivoArvoreDecisao(OtimizacaoObjetivo):
@@ -127,8 +134,8 @@ class OtimizacaoObjetivoRandomForest(OtimizacaoObjetivo):
         #Para passar nos testes, os parametros devem ter o seguintes nomes: "min_samples_split",
         #. "max_features" e "num_arvores". Não mude a ordem de atribuição
         #. abaixo
-        min_samples = trial.suggest_float('min_samples_split', 0, 0.5)
-        max_features = trial.suggest_float('max_features', 0, 0.5)
+        min_samples = trial.suggest_uniform('min_samples_split', 0, 0.5)
+        max_features = trial.suggest_uniform('max_features', 0, 0.5)
         num_arvores = trial.suggest_int('num_arvores', 1, self.num_arvores_max)
         #coloque, ao instanciar o RandomForestClassifier como random_state=2
         clf_rf = RandomForestClassifier(n_estimators=num_arvores, min_samples_split=min_samples, max_features=max_features, 

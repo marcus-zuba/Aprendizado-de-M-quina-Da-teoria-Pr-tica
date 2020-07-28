@@ -157,12 +157,10 @@ class ExperimentoTest(unittest.TestCase):
     def setUp(self):
         warnings.simplefilter("ignore")
     def get_experimento(self,ml_method=DecisionTreeClassifier(min_samples_split=1,random_state=1),ClasseObjetivoOtimizacao=OtimizacaoObjetivoArvoreDecisao):
-
-
-        folds = Fold.gerar_k_folds(Dados.df_dados,val_k=5,col_classe="realClass",
-                                    num_repeticoes=1,seed=1,
-                                    num_folds_validacao=3,num_repeticoes_validacao=2)
-
+    
+        folds = Fold.gerar_k_folds(Dados.df_dados,val_k=5,col_classe="realClass",num_repeticoes=1,
+                               seed=1,num_folds_validacao=3,num_repeticoes_validacao=2)
+                                                                        
         exp = Experimento(folds,ml_method, ClasseObjetivoOtimizacao, num_trials=10,
                             sampler=optuna.samplers.TPESampler(seed=1, n_startup_trials=3))
         return exp
@@ -183,7 +181,7 @@ class ExperimentoTest(unittest.TestCase):
         arrExpMacroF1 =[0.3333333333333333,0.35555555555555557,
                         0.38888888888888884,0.3,0.1904761904761905]
         exp.calcula_resultados()
-
+      
         for i,macro_f1 in enumerate(arrExpMacroF1):
             self.assertTrue(type(exp.resultados[i]) == Resultado, "O método calcula_resultados deve retornar uma lista de objetos da classe Resultado e não float.")
             print(f"Fold: {i} Macro F1: {exp.resultados[i].macro_f1}")
